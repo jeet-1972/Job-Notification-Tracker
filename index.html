@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Job Notification App — Design System</title>
+  <title>Job Notification Tracker</title>
   <link rel="stylesheet" href="design-system/design-system.css">
 </head>
 <body class="app">
   <!-- Top Bar -->
   <header class="topbar">
-    <span class="topbar__brand">Job Notification App</span>
+    <a href="#/" class="topbar__brand" id="brand-link">Job Notification Tracker</a>
     <span class="topbar__progress">Step 1 / 4</span>
     <div class="topbar__status">
       <span class="badge badge-neutral">In Progress</span>
@@ -20,29 +20,29 @@
   <nav class="primary-nav" aria-label="Primary">
     <div class="primary-nav__inner">
       <div class="primary-nav__links primary-nav__links--desktop">
-        <a href="/dashboard" data-route="/dashboard" class="primary-nav__link">Dashboard</a>
-        <a href="/saved" data-route="/saved" class="primary-nav__link">Saved</a>
-        <a href="/digest" data-route="/digest" class="primary-nav__link">Digest</a>
-        <a href="/settings" data-route="/settings" class="primary-nav__link">Settings</a>
-        <a href="/proof" data-route="/proof" class="primary-nav__link">Proof</a>
+        <a href="#/dashboard" data-route="/dashboard" class="primary-nav__link">Dashboard</a>
+        <a href="#/saved" data-route="/saved" class="primary-nav__link">Saved</a>
+        <a href="#/digest" data-route="/digest" class="primary-nav__link">Digest</a>
+        <a href="#/settings" data-route="/settings" class="primary-nav__link">Settings</a>
+        <a href="#/proof" data-route="/proof" class="primary-nav__link">Proof</a>
       </div>
       <button type="button" class="primary-nav__toggle" aria-label="Toggle navigation" aria-expanded="false">
         <span class="primary-nav__icon"></span>
       </button>
     </div>
     <div class="primary-nav__links primary-nav__links--mobile" hidden>
-      <a href="/dashboard" data-route="/dashboard" class="primary-nav__link">Dashboard</a>
-      <a href="/saved" data-route="/saved" class="primary-nav__link">Saved</a>
-      <a href="/digest" data-route="/digest" class="primary-nav__link">Digest</a>
-      <a href="/settings" data-route="/settings" class="primary-nav__link">Settings</a>
-      <a href="/proof" data-route="/proof" class="primary-nav__link">Proof</a>
+      <a href="#/dashboard" data-route="/dashboard" class="primary-nav__link">Dashboard</a>
+      <a href="#/saved" data-route="/saved" class="primary-nav__link">Saved</a>
+      <a href="#/digest" data-route="/digest" class="primary-nav__link">Digest</a>
+      <a href="#/settings" data-route="/settings" class="primary-nav__link">Settings</a>
+      <a href="#/proof" data-route="/proof" class="primary-nav__link">Proof</a>
     </div>
   </nav>
 
   <!-- Context Header -->
   <section class="context-header">
-    <h1 id="page-title">Dashboard</h1>
-    <p class="subtext" id="page-subtitle">This section will be built in the next step.</p>
+    <h1 id="page-title">Stop Missing The Right Jobs.</h1>
+    <p class="subtext" id="page-subtitle"></p>
   </section>
 
   <!-- Main: Workspace + Panel -->

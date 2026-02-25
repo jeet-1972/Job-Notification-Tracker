@@ -1,4 +1,4 @@
-# Job Notification App — Design System
+# Job Notification Tracker — Design System
 
 Premium SaaS design system. Calm, intentional, coherent, confident. B2C product quality.
 

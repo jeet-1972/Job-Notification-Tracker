@@ -85,6 +85,32 @@
   resize: vertical;
 }
 
+.select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234A4A4A' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-sm) center;
+  padding-right: 32px;
+}
+
+/* ─── Form groups (settings placeholder) ─── */
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
 /* ─── Cards ─── */
 .card {
   background-color: var(--color-bg);
@@ -184,6 +210,23 @@
 
 .empty-state .btn {
   margin-top: var(--space-xs);
+}
+
+/* ─── Route view blocks ─── */
+.route-view__subtext {
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-body-lg);
+  line-height: var(--line-height-loose);
+  color: var(--color-text-muted);
+  max-width: var(--text-max-width);
+}
+
+.route-view__block .heading-lg {
+  margin-bottom: var(--space-sm);
+}
+
+.route-view__block .subtext {
+  margin-bottom: 0;
 }
 
 /* ─── Checklist (Proof Footer) ─── */
