@@ -1,0 +1,17 @@
+---
+description: UI must follow the Job Notification App design system
+globs: design-system/**/*.css, **/*.html, **/*.tsx, **/*.jsx
+alwaysApply: false
+---
+
+# Design System Rules
+
+When editing UI, follow the design system in `design-system/` and `DESIGN_SYSTEM.md`.
+
+- **Colors:** Only `#F7F6F3`, `#111111`, `#8B0000`, muted green/amber. No gradients, neon, or glassmorphism.
+- **Spacing:** Only 8px, 16px, 24px, 40px, 64px (vars: `--space-xs` through `--space-xl`).
+- **Layout:** Top Bar → Context Header → Workspace (70%) + Panel (30%) → Proof Footer.
+- **Components:** Use `.btn`, `.btn-primary`, `.btn-secondary`, `.card`, `.badge`, `.input`, `.prompt-box`, `.checklist`. Same border radius everywhere.
+- **Transitions:** 150–200ms, ease-in-out. No bounce or parallax.
+- **Errors:** Explain what went wrong and how to fix; never blame the user.
+- **Empty states:** Guide next action; never leave blank screens.

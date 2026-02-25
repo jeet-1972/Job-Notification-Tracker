@@ -1,0 +1,122 @@
+/**
+ * Job Notification App — Global Layout
+ * [Top Bar] → [Context Header] → [Workspace 70%] + [Panel 30%] → [Proof Footer]
+ */
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Top Bar ─── */
+.topbar {
+  height: var(--topbar-height);
+  padding: 0 var(--space-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  flex-shrink: 0;
+}
+
+.topbar__brand {
+  font-family: var(--font-serif);
+  font-size: var(--text-heading-md);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.topbar__progress {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.topbar__status .badge {
+  margin: 0;
+}
+
+/* ─── Context Header ─── */
+.context-header {
+  padding: var(--context-header-padding);
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.context-header h1,
+.context-header .heading-xl {
+  margin-bottom: var(--space-xs);
+}
+
+.context-header .subtext {
+  margin-bottom: 0;
+}
+
+/* ─── Main content: Workspace + Panel ─── */
+.main {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.workspace {
+  flex: 0 0 var(--layout-workspace-ratio);
+  padding: var(--space-lg);
+  overflow-y: auto;
+  border-right: 1px solid var(--color-border);
+}
+
+.panel {
+  flex: 0 0 var(--layout-panel-ratio);
+  padding: var(--space-md);
+  overflow-y: auto;
+  background-color: var(--color-bg);
+}
+
+.panel__section {
+  margin-bottom: var(--space-md);
+}
+
+.panel__section:last-child {
+  margin-bottom: 0;
+}
+
+.panel__title {
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-xs);
+}
+
+.panel__step-desc {
+  font-size: var(--text-body);
+  line-height: var(--line-height-body);
+  color: var(--color-text);
+  margin: 0 0 var(--space-sm);
+}
+
+.panel .prompt-box {
+  margin-bottom: var(--space-sm);
+}
+
+.panel .btn {
+  margin-right: var(--space-xs);
+  margin-bottom: var(--space-xs);
+}
+
+/* ─── Proof Footer ─── */
+.proof-footer {
+  padding: var(--space-sm) var(--space-md);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  flex-shrink: 0;
+}
+
+.proof-footer .checklist {
+  justify-content: flex-start;
+}

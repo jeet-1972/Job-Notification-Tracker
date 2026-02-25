@@ -1,0 +1,56 @@
+/**
+ * Job Notification App — Design Tokens
+ * Premium SaaS design system. Calm, intentional, coherent.
+ * Do not add gradients, glassmorphism, neon, or decorative effects.
+ */
+
+:root {
+  /* ─── Color (max 4 in use) ─── */
+  --color-bg: #F7F6F3;
+  --color-text: #111111;
+  --color-accent: #8B0000;
+  --color-success: #5A6B5A;
+  --color-warning: #8B7355;
+
+  /* Semantic aliases */
+  --color-border: #E5E4E0;
+  --color-border-focus: #8B0000;
+  --color-text-muted: #4A4A4A;
+
+  /* ─── Typography ─── */
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --text-heading-xl: 2.25rem;   /* 36px */
+  --text-heading-lg: 1.75rem;  /* 28px */
+  --text-heading-md: 1.25rem;  /* 20px */
+  --text-body: 1rem;           /* 16px */
+  --text-body-lg: 1.125rem;    /* 18px */
+  --text-caption: 0.875rem;    /* 14px */
+
+  --line-height-tight: 1.35;
+  --line-height-body: 1.6;
+  --line-height-loose: 1.8;
+
+  --text-max-width: 720px;
+
+  /* ─── Spacing (only this scale: 8, 16, 24, 40, 64) ─── */
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 40px;
+  --space-xl: 64px;
+
+  /* ─── Radii (same everywhere) ─── */
+  --radius: 6px;
+
+  /* ─── Transitions ─── */
+  --transition-duration: 180ms;
+  --transition-ease: ease-in-out;
+
+  /* ─── Layout ─── */
+  --layout-workspace-ratio: 70%;
+  --layout-panel-ratio: 30%;
+  --topbar-height: 56px;
+  --context-header-padding: var(--space-lg) 0;
+}
