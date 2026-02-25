@@ -16,33 +16,41 @@
     </div>
   </header>
 
+  <!-- Shared Primary Navigation -->
+  <nav class="primary-nav" aria-label="Primary">
+    <div class="primary-nav__inner">
+      <div class="primary-nav__links primary-nav__links--desktop">
+        <a href="/dashboard" data-route="/dashboard" class="primary-nav__link">Dashboard</a>
+        <a href="/saved" data-route="/saved" class="primary-nav__link">Saved</a>
+        <a href="/digest" data-route="/digest" class="primary-nav__link">Digest</a>
+        <a href="/settings" data-route="/settings" class="primary-nav__link">Settings</a>
+        <a href="/proof" data-route="/proof" class="primary-nav__link">Proof</a>
+      </div>
+      <button type="button" class="primary-nav__toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span class="primary-nav__icon"></span>
+      </button>
+    </div>
+    <div class="primary-nav__links primary-nav__links--mobile" hidden>
+      <a href="/dashboard" data-route="/dashboard" class="primary-nav__link">Dashboard</a>
+      <a href="/saved" data-route="/saved" class="primary-nav__link">Saved</a>
+      <a href="/digest" data-route="/digest" class="primary-nav__link">Digest</a>
+      <a href="/settings" data-route="/settings" class="primary-nav__link">Settings</a>
+      <a href="/proof" data-route="/proof" class="primary-nav__link">Proof</a>
+    </div>
+  </nav>
+
   <!-- Context Header -->
   <section class="context-header">
-    <h1>Design system foundation</h1>
-    <p class="subtext">Layout, typography, and components. No product features yet.</p>
+    <h1 id="page-title">Dashboard</h1>
+    <p class="subtext" id="page-subtitle">This section will be built in the next step.</p>
   </section>
 
   <!-- Main: Workspace + Panel -->
   <main class="main">
     <div class="workspace">
-      <div class="card" style="margin-bottom: 24px;">
-        <h3 class="heading-md">Primary workspace</h3>
-        <p class="text-muted">Clean cards, subtle borders, predictable components. No crowding.</p>
-      </div>
-      <div class="card">
-        <h3 class="heading-md">Sample card</h3>
-        <p>Body text uses 16–18px, line-height 1.6–1.8, max-width 720px for readability.</p>
-        <p class="text-muted" style="margin-top: 16px;">Secondary text uses the muted color.</p>
-      </div>
-      <div class="empty-state" style="margin-top: 24px;">
-        <h3 class="heading-md">No items yet</h3>
-        <p class="subtext">Add your first item to get started.</p>
-        <button type="button" class="btn btn-primary">Add item</button>
-      </div>
-      <div class="error-message" style="margin-top: 24px;">
-        <strong>Something went wrong</strong>
-        We couldn’t save your changes. Check your connection and try again.
-      </div>
+      <section id="route-view" class="route-view">
+        <!-- Route placeholder content will be rendered here -->
+      </section>
     </div>
 
     <aside class="panel">
@@ -70,5 +78,6 @@
       <li><input type="checkbox" id="c4" aria-label="Deployed"><label for="c4">Deployed</label></li>
     </ul>
   </footer>
+  <script src="app.js"></script>
 </body>
 </html>

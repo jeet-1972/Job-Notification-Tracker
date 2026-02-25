@@ -38,6 +38,93 @@
   margin: 0;
 }
 
+/* ─── Primary Navigation Bar ─── */
+.primary-nav {
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+  padding: 0 var(--space-md);
+  flex-shrink: 0;
+}
+
+.primary-nav__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+}
+
+.primary-nav__links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.primary-nav__link {
+  position: relative;
+  padding: var(--space-xs) 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--color-text-muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition-duration) var(--transition-ease),
+    border-color var(--transition-duration) var(--transition-ease);
+}
+
+.primary-nav__link:hover {
+  color: var(--color-text);
+}
+
+.primary-nav__link--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+.primary-nav__toggle {
+  display: none;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-nav__icon,
+.primary-nav__icon::before,
+.primary-nav__icon::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background-color: var(--color-text);
+  border-radius: 2px;
+  transition: background-color var(--transition-duration) var(--transition-ease);
+}
+
+.primary-nav__icon::before,
+.primary-nav__icon::after {
+  content: "";
+  position: relative;
+  display: block;
+}
+
+.primary-nav__icon::before {
+  top: -5px;
+}
+
+.primary-nav__icon::after {
+  top: 3px;
+}
+
+.primary-nav__links--mobile {
+  display: none;
+  flex-direction: column;
+  padding: 0 0 var(--space-sm);
+}
+
 /* ─── Context Header ─── */
 .context-header {
   padding: var(--context-header-padding);
@@ -66,6 +153,10 @@
   padding: var(--space-lg);
   overflow-y: auto;
   border-right: 1px solid var(--color-border);
+}
+
+.route-view {
+  max-width: var(--text-max-width);
 }
 
 .panel {
@@ -119,4 +210,23 @@
 
 .proof-footer .checklist {
   justify-content: flex-start;
+}
+
+/* ─── Responsive Navigation ─── */
+@media (max-width: 768px) {
+  .primary-nav {
+    padding: 0 var(--space-sm);
+  }
+
+  .primary-nav__links--desktop {
+    display: none;
+  }
+
+  .primary-nav__toggle {
+    display: inline-flex;
+  }
+
+  .primary-nav.primary-nav--open .primary-nav__links--mobile {
+    display: flex;
+  }
 }
