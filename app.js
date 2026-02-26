@@ -17,6 +17,40 @@
 
   var JOBS = window.JOB_DATA || [];
   var SAVED_KEY = "jobNotificationTracker_savedIds";
+  var PREFERENCES_KEY = "jobTrackerPreferences";
+
+  var DEFAULT_PREFERENCES = {
+    roleKeywords: "",
+    preferredLocations: [],
+    preferredMode: [],
+    experienceLevel: "",
+    skills: "",
+    minMatchScore: 40
+  };
+
+  function getPreferences() {
+    try {
+      var raw = localStorage.getItem(PREFERENCES_KEY);
+      if (!raw) return null;
+      var p = JSON.parse(raw);
+      return {
+        roleKeywords: typeof p.roleKeywords === "string" ? p.roleKeywords : "",
+        preferredLocations: Array.isArray(p.preferredLocations) ? p.preferredLocations : [],
+        preferredMode: Array.isArray(p.preferredMode) ? p.preferredMode : [],
+        experienceLevel: typeof p.experienceLevel === "string" ? p.experienceLevel : "",
+        skills: typeof p.skills === "string" ? p.skills : "",
+        minMatchScore: typeof p.minMatchScore === "number" ? Math.max(0, Math.min(100, p.minMatchScore)) : 40
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function setPreferences(prefs) {
+    try {
+      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(prefs));
+    } catch (e) {}
+  }
 
   function getSavedJobIds() {
     try {
@@ -40,6 +74,57 @@
     var div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function computeMatchScore(job, prefs) {
+    if (!prefs) return 0;
+    var score = 0;
+    var title = (job.title || "").toLowerCase();
+    var desc = (job.description || "").toLowerCase();
+
+    var roleKw = (prefs.roleKeywords || "").split(",").map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+    if (roleKw.length) {
+      for (var i = 0; i < roleKw.length; i++) {
+        if (title.indexOf(roleKw[i]) !== -1) {
+          score += 25;
+          break;
+        }
+      }
+      for (var j = 0; j < roleKw.length; j++) {
+        if (desc.indexOf(roleKw[j]) !== -1) {
+          score += 15;
+          break;
+        }
+      }
+    }
+
+    var locs = prefs.preferredLocations || [];
+    if (locs.length && job.location && locs.indexOf(job.location) !== -1) score += 15;
+
+    var modes = prefs.preferredMode || [];
+    if (modes.length && job.mode && modes.indexOf(job.mode) !== -1) score += 10;
+
+    if (prefs.experienceLevel && job.experience === prefs.experienceLevel) score += 10;
+
+    var userSkills = (prefs.skills || "").split(",").map(function (s) { return s.trim().toLowerCase(); }).filter(Boolean);
+    var jobSkills = (job.skills || []).map(function (s) { return (s || "").toLowerCase(); });
+    if (userSkills.length && jobSkills.length) {
+      var skillMatch = false;
+      for (var k = 0; k < userSkills.length && !skillMatch; k++) {
+        for (var m = 0; m < jobSkills.length; m++) {
+          if (jobSkills[m].indexOf(userSkills[k]) !== -1 || userSkills[k].indexOf(jobSkills[m]) !== -1) {
+            skillMatch = true;
+            break;
+          }
+        }
+      }
+      if (skillMatch) score += 15;
+    }
+
+    if (job.postedDaysAgo != null && job.postedDaysAgo <= 2) score += 5;
+    if (job.source === "LinkedIn") score += 5;
+
+    return Math.min(100, score);
   }
 
   function getFilterBarHtml() {
@@ -79,7 +164,15 @@
       '<select id="filter-sort" class="input select" aria-label="Sort">' +
       '<option value="latest">Latest</option>' +
       '<option value="oldest">Oldest</option>' +
+      '<option value="match">Match Score</option>' +
+      '<option value="salary">Salary</option>' +
       "</select>" +
+      "</div>" +
+      '<div class="filter-bar filter-bar--toggle">' +
+      '<label class="toggle-label">' +
+      '<input type="checkbox" id="filter-above-threshold" aria-label="Show only jobs above my threshold">' +
+      '<span>Show only jobs above my threshold</span>' +
+      "</label>" +
       "</div>"
     );
   }
@@ -91,18 +184,26 @@
     var exp = document.getElementById("filter-experience");
     var src = document.getElementById("filter-source");
     var sort = document.getElementById("filter-sort");
+    var aboveThreshold = document.getElementById("filter-above-threshold");
     return {
       keyword: kw ? kw.value.trim().toLowerCase() : "",
       location: loc ? loc.value : "",
       mode: mode ? mode.value : "",
       experience: exp ? exp.value : "",
       source: src ? src.value : "",
-      sort: sort ? sort.value : "latest"
+      sort: sort ? sort.value : "latest",
+      aboveThreshold: aboveThreshold ? aboveThreshold.checked : false
     };
   }
 
-  function applyFiltersAndSort(jobs, filterValues) {
-    var list = jobs.slice();
+  function extractSalaryNumber(salaryRange) {
+    if (!salaryRange || typeof salaryRange !== "string") return 0;
+    var m = salaryRange.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 0;
+  }
+
+  function applyFiltersAndSort(jobsWithScores, filterValues, minMatchScore) {
+    var list = jobsWithScores.slice();
     var kw = filterValues.keyword;
     var loc = filterValues.location;
     var mode = filterValues.mode;
@@ -111,20 +212,38 @@
 
     if (kw) {
       list = list.filter(function (j) {
-        var t = (j.title || "").toLowerCase();
-        var c = (j.company || "").toLowerCase();
+        var job = j.job || j;
+        var t = (job.title || "").toLowerCase();
+        var c = (job.company || "").toLowerCase();
         return t.indexOf(kw) !== -1 || c.indexOf(kw) !== -1;
       });
     }
-    if (loc) list = list.filter(function (j) { return (j.location || "") === loc; });
-    if (mode) list = list.filter(function (j) { return (j.mode || "") === mode; });
-    if (exp) list = list.filter(function (j) { return (j.experience || "") === exp; });
-    if (src) list = list.filter(function (j) { return (j.source || "") === src; });
+    if (loc) list = list.filter(function (j) { var job = j.job || j; return (job.location || "") === loc; });
+    if (mode) list = list.filter(function (j) { var job = j.job || j; return (job.mode || "") === mode; });
+    if (exp) list = list.filter(function (j) { var job = j.job || j; return (job.experience || "") === exp; });
+    if (src) list = list.filter(function (j) { var job = j.job || j; return (job.source || "") === src; });
 
+    if (filterValues.aboveThreshold && typeof minMatchScore === "number") {
+      list = list.filter(function (j) { return (j.matchScore != null ? j.matchScore : 0) >= minMatchScore; });
+    }
+
+    var sortBy = filterValues.sort || "latest";
     list.sort(function (a, b) {
-      var da = a.postedDaysAgo != null ? a.postedDaysAgo : 0;
-      var db = b.postedDaysAgo != null ? b.postedDaysAgo : 0;
-      return filterValues.sort === "oldest" ? da - db : db - da;
+      var jobA = a.job || a;
+      var jobB = b.job || b;
+      if (sortBy === "match") {
+        var sa = a.matchScore != null ? a.matchScore : 0;
+        var sb = b.matchScore != null ? b.matchScore : 0;
+        return sb - sa;
+      }
+      if (sortBy === "salary") {
+        var na = extractSalaryNumber(jobA.salaryRange);
+        var nb = extractSalaryNumber(jobB.salaryRange);
+        return nb - na;
+      }
+      var da = jobA.postedDaysAgo != null ? jobA.postedDaysAgo : 0;
+      var db = jobB.postedDaysAgo != null ? jobB.postedDaysAgo : 0;
+      return sortBy === "oldest" ? db - da : da - db;
     });
     return list;
   }
@@ -135,7 +254,14 @@
     return days + " days ago";
   }
 
-  function getJobCardHtml(job, isSaved) {
+  function getMatchScoreBadgeClass(score) {
+    if (score >= 80) return "badge-score-high";
+    if (score >= 60) return "badge-score-mid";
+    if (score >= 40) return "badge-score-neutral";
+    return "badge-score-low";
+  }
+
+  function getJobCardHtml(job, isSaved, matchScore) {
     var id = escapeHtml(job.id);
     var title = escapeHtml(job.title);
     var company = escapeHtml(job.company);
@@ -150,8 +276,13 @@
       ? '<span class="badge badge-success">Saved</span>'
       : '<button type="button" class="btn btn-secondary" data-action="save" data-job-id="' + id + '">Save</button>';
 
+    var scoreBadge = typeof matchScore === "number"
+      ? '<span class="badge ' + getMatchScoreBadgeClass(matchScore) + '">' + matchScore + "% match</span>"
+      : "";
+
     return (
       '<div class="job-card card" data-job-id="' + id + '">' +
+      (scoreBadge ? '<div class="job-card__score">' + scoreBadge + "</div>" : "") +
       '<h3 class="job-card__title">' + title + "</h3>" +
       '<p class="job-card__company">' + company + "</p>" +
       '<div class="job-card__meta">' +
@@ -188,13 +319,17 @@
     );
   }
 
-  function getJobsListHtml(jobs, savedIds) {
-    if (!jobs.length) {
-      return '<div class="no-results">No jobs match your search.</div>';
+  function getJobsListHtml(items, savedIds, noMatchesMessage) {
+    if (!items.length) {
+      var msg = noMatchesMessage || "No jobs match your search.";
+      return '<div class="no-results">' + escapeHtml(msg) + "</div>";
     }
     var html = '<div class="jobs-list">';
-    for (var i = 0; i < jobs.length; i++) {
-      html += getJobCardHtml(jobs[i], savedIds.indexOf(jobs[i].id) !== -1);
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+      var job = item.job || item;
+      var score = item.matchScore;
+      html += getJobCardHtml(job, savedIds.indexOf(job.id) !== -1, score);
     }
     html += "</div>";
     return html;
@@ -203,8 +338,23 @@
   function renderDashboard() {
     var filterValues = getFilterValues();
     var savedIds = getSavedJobIds();
-    var filtered = applyFiltersAndSort(JOBS, filterValues);
-    var listHtml = getJobsListHtml(filtered, savedIds);
+    var prefs = getPreferences();
+    var minMatchScore = (prefs && typeof prefs.minMatchScore === "number") ? prefs.minMatchScore : 40;
+
+    var jobList = Array.isArray(JOBS) ? JOBS : [];
+    var jobsWithScores = jobList.map(function (job) {
+      return { job: job, matchScore: computeMatchScore(job, prefs) };
+    });
+
+    var filtered = applyFiltersAndSort(jobsWithScores, filterValues, filterValues.aboveThreshold ? minMatchScore : null);
+    var noMatchesMsg = "No roles match your criteria. Adjust filters or lower threshold.";
+    var listHtml = getJobsListHtml(filtered, savedIds, noMatchesMsg);
+
+    var bannerEl = document.getElementById("dashboard-prefs-banner");
+    if (bannerEl) {
+      bannerEl.style.display = prefs ? "none" : "block";
+    }
+
     var container = document.getElementById("jobs-list-container");
     if (container) {
       container.innerHTML = listHtml;
@@ -257,38 +407,95 @@
     });
   }
 
-  function getSettingsFormHtml() {
+  function getSettingsFormHtml(prefs) {
+    var p = prefs || {};
+    var roleKw = escapeHtml(p.roleKeywords || "");
+    var skillsVal = escapeHtml(p.skills || "");
+    var expLevel = p.experienceLevel || "";
+    var minScore = typeof p.minMatchScore === "number" ? p.minMatchScore : 40;
+    var locs = p.preferredLocations || [];
+    var modes = p.preferredMode || [];
+
+    var locOptions = ["Bangalore", "Chennai", "Hyderabad", "Mumbai", "Pune", "Noida", "Gurgaon", "Remote"];
+    var locSelectHtml = locOptions.map(function (loc) {
+      var sel = locs.indexOf(loc) !== -1 ? " selected" : "";
+      return '<option value="' + escapeHtml(loc) + '"' + sel + ">" + escapeHtml(loc) + "</option>";
+    }).join("");
+
     return (
       '<div class="settings-form">' +
       '<div class="form-group">' +
       '<label class="form-label" for="role-keywords">Role keywords</label>' +
-      '<input type="text" id="role-keywords" class="input" placeholder="e.g. Product Manager, Engineer" aria-label="Role keywords">' +
+      '<input type="text" id="role-keywords" class="input" placeholder="e.g. SDE, React, Backend" value="' + roleKw + '" aria-label="Role keywords">' +
       "</div>" +
       '<div class="form-group">' +
       '<label class="form-label" for="preferred-locations">Preferred locations</label>' +
-      '<input type="text" id="preferred-locations" class="input" placeholder="e.g. San Francisco, Remote" aria-label="Preferred locations">' +
+      '<select id="preferred-locations" class="input select" multiple aria-label="Preferred locations">' +
+      locSelectHtml +
+      "</select>" +
+      '<span class="form-hint">Hold Ctrl/Cmd to select multiple</span>' +
       "</div>" +
       '<div class="form-group">' +
-      '<label class="form-label" for="work-mode">Mode</label>' +
-      '<select id="work-mode" class="input select" aria-label="Work mode">' +
-      '<option value="">Select...</option>' +
-      '<option value="remote">Remote</option>' +
-      '<option value="hybrid">Hybrid</option>' +
-      '<option value="onsite">Onsite</option>' +
-      "</select>" +
+      '<span class="form-label">Preferred mode</span>' +
+      '<div class="checkbox-group">' +
+      '<label class="checkbox-label"><input type="checkbox" name="preferred-mode" value="Remote"' + (modes.indexOf("Remote") !== -1 ? " checked" : "") + '> Remote</label>' +
+      '<label class="checkbox-label"><input type="checkbox" name="preferred-mode" value="Hybrid"' + (modes.indexOf("Hybrid") !== -1 ? " checked" : "") + '> Hybrid</label>' +
+      '<label class="checkbox-label"><input type="checkbox" name="preferred-mode" value="Onsite"' + (modes.indexOf("Onsite") !== -1 ? " checked" : "") + '> Onsite</label>' +
+      "</div>" +
       "</div>" +
       '<div class="form-group">' +
       '<label class="form-label" for="experience-level">Experience level</label>' +
       '<select id="experience-level" class="input select" aria-label="Experience level">' +
-      '<option value="">Select...</option>' +
-      '<option value="entry">Entry</option>' +
-      '<option value="mid">Mid</option>' +
-      '<option value="senior">Senior</option>' +
-      '<option value="lead">Lead</option>' +
+      '<option value="">Any</option>' +
+      '<option value="Fresher"' + (expLevel === "Fresher" ? " selected" : "") + ">Fresher</option>" +
+      '<option value="0-1"' + (expLevel === "0-1" ? " selected" : "") + ">0-1</option>" +
+      '<option value="1-3"' + (expLevel === "1-3" ? " selected" : "") + ">1-3</option>" +
+      '<option value="3-5"' + (expLevel === "3-5" ? " selected" : "") + ">3-5</option>" +
       "</select>" +
       "</div>" +
+      '<div class="form-group">' +
+      '<label class="form-label" for="skills">Skills</label>' +
+      '<input type="text" id="skills" class="input" placeholder="e.g. Java, Python, React" value="' + skillsVal + '" aria-label="Skills">' +
+      "</div>" +
+      '<div class="form-group">' +
+      '<label class="form-label" for="min-match-score">Minimum match score (0–100)</label>' +
+      '<input type="range" id="min-match-score" class="input-range" min="0" max="100" value="' + minScore + '" aria-label="Minimum match score">' +
+      '<span id="min-match-score-value" class="form-hint">' + minScore + '</span>' +
+      "</div>" +
+      '<button type="button" class="btn btn-primary" id="settings-save">Save preferences</button>' +
       "</div>"
     );
+  }
+
+  function readSettingsForm() {
+    var roleEl = document.getElementById("role-keywords");
+    var locEl = document.getElementById("preferred-locations");
+    var expEl = document.getElementById("experience-level");
+    var skillsEl = document.getElementById("skills");
+    var minEl = document.getElementById("min-match-score");
+    var modeChecks = document.querySelectorAll('input[name="preferred-mode"]:checked');
+
+    var locs = [];
+    if (locEl && locEl.options) {
+      for (var i = 0; i < locEl.options.length; i++) {
+        if (locEl.options[i].selected) locs.push(locEl.options[i].value);
+      }
+    }
+    var modes = [];
+    if (modeChecks && modeChecks.length) {
+      for (var j = 0; j < modeChecks.length; j++) {
+        modes.push(modeChecks[j].value);
+      }
+    }
+
+    return {
+      roleKeywords: roleEl ? roleEl.value.trim() : "",
+      preferredLocations: locs,
+      preferredMode: modes,
+      experienceLevel: expEl ? expEl.value : "",
+      skills: skillsEl ? skillsEl.value.trim() : "",
+      minMatchScore: minEl ? Math.max(0, Math.min(100, parseInt(minEl.value, 10) || 40)) : 40
+    };
   }
 
   function getLandingHtml() {
@@ -364,10 +571,14 @@
           });
         }
       } else if (isSettings) {
-        routeView.innerHTML = getSettingsFormHtml();
+        routeView.innerHTML = getSettingsFormHtml(getPreferences());
+        attachSettingsListeners();
       } else if (isDashboard) {
         routeView.classList.add("route-view--full");
-        routeView.innerHTML = getFilterBarHtml() + '<div id="jobs-list-container"></div>';
+        routeView.innerHTML =
+          '<div id="dashboard-prefs-banner" class="prefs-banner" style="display:none;">Set your preferences to activate intelligent matching.</div>' +
+          getFilterBarHtml() +
+          '<div id="jobs-list-container"></div>';
         renderDashboard();
         attachDashboardListeners();
       } else if (isSaved) {
@@ -415,6 +626,7 @@
     var experience = document.getElementById("filter-experience");
     var source = document.getElementById("filter-source");
     var sort = document.getElementById("filter-sort");
+    var aboveThreshold = document.getElementById("filter-above-threshold");
 
     function onFilterChange() {
       renderDashboard();
@@ -426,6 +638,33 @@
     if (experience) experience.addEventListener("change", onFilterChange);
     if (source) source.addEventListener("change", onFilterChange);
     if (sort) sort.addEventListener("change", onFilterChange);
+    if (aboveThreshold) aboveThreshold.addEventListener("change", onFilterChange);
+  }
+
+  function attachSettingsListeners() {
+    var saveBtn = document.getElementById("settings-save");
+    var minSlider = document.getElementById("min-match-score");
+    var minValueSpan = document.getElementById("min-match-score-value");
+
+    if (minSlider && minValueSpan) {
+      function updateSliderLabel() {
+        minValueSpan.textContent = minSlider.value;
+      }
+      minSlider.addEventListener("input", updateSliderLabel);
+      updateSliderLabel();
+    }
+
+    if (saveBtn) {
+      saveBtn.addEventListener("click", function () {
+        var prefs = readSettingsForm();
+        setPreferences(prefs);
+        if (saveBtn) {
+          var orig = saveBtn.textContent;
+          saveBtn.textContent = "Saved";
+          setTimeout(function () { saveBtn.textContent = orig; }, 1500);
+        }
+      });
+    }
   }
 
   function onRouteViewClick(e) {
