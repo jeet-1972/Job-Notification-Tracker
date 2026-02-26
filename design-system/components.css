@@ -422,6 +422,54 @@
   margin-bottom: var(--space-sm);
 }
 
+.job-card__status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-top: var(--space-sm);
+}
+
+.job-card__status-badge {
+  margin-right: var(--space-sm);
+}
+
+.job-card__status-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.job-status-btn {
+  font-size: var(--text-caption);
+  padding-inline: var(--space-xs);
+}
+
+.job-status-btn--active {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}
+
+.badge-status-not-applied {
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.badge-status-applied {
+  border-color: #1f4f7a;
+  color: #1f4f7a;
+}
+
+.badge-status-rejected {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.badge-status-selected {
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+
 .job-card__footer {
   display: flex;
   flex-wrap: wrap;
@@ -662,4 +710,89 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
+}
+
+.digest-status {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.digest-status__title {
+  font-family: var(--font-serif);
+  font-size: var(--text-heading-md);
+  font-weight: 600;
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text);
+}
+
+.digest-status__empty {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.digest-status__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.digest-status__item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  font-size: var(--text-caption);
+  color: var(--color-text);
+}
+
+.digest-status__primary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.digest-status__job-title {
+  font-weight: 500;
+}
+
+.digest-status__company {
+  color: var(--color-text-muted);
+}
+
+.digest-status__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  color: var(--color-text-muted);
+}
+
+.digest-status__status {
+  font-weight: 500;
+}
+
+.digest-status__date {
+  font-style: normal;
+}
+
+.status-toast {
+  position: fixed;
+  right: var(--space-md);
+  bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  color: var(--color-text);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-duration) var(--transition-ease);
+  z-index: 1100;
+}
+
+.status-toast--visible {
+  opacity: 1;
 }
