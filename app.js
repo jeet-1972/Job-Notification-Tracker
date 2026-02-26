@@ -21,6 +21,20 @@
   var DIGEST_KEY_PREFIX = "jobTrackerDigest_";
   var STATUS_KEY = "jobTrackerStatus";
   var statusToastTimeoutId = null;
+  var TEST_CHECKLIST_KEY = "jobTrackerTestStatus";
+
+  var TEST_ITEMS = [
+    { label: "Preferences persist after refresh", tooltip: "How to test" },
+    { label: "Match score calculates correctly", tooltip: "How to test" },
+    { label: '"Show only matches" toggle works', tooltip: "How to test" },
+    { label: "Save job persists after refresh", tooltip: "How to test" },
+    { label: "Apply opens in new tab", tooltip: "How to test" },
+    { label: "Status update persists after refresh", tooltip: "How to test" },
+    { label: "Status filter works correctly", tooltip: "How to test" },
+    { label: "Digest generates top 10 by score", tooltip: "How to test" },
+    { label: "Digest persists for the day", tooltip: "How to test" },
+    { label: "No console errors on main pages", tooltip: "How to test" }
+  ];
 
   var DEFAULT_PREFERENCES = {
     roleKeywords: "",
@@ -99,6 +113,35 @@
     var entry = map[jobId];
     var status = entry && entry.status;
     return status || "Not Applied";
+  }
+
+  function getTestChecklistState() {
+    try {
+      var raw = localStorage.getItem(TEST_CHECKLIST_KEY);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || arr.length !== TEST_ITEMS.length) return [];
+      return arr.slice(0, TEST_ITEMS.length);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function setTestChecklistState(state) {
+    try {
+      var arr = Array.isArray(state) ? state.slice(0, TEST_ITEMS.length) : [];
+      while (arr.length < TEST_ITEMS.length) arr.push(false);
+      localStorage.setItem(TEST_CHECKLIST_KEY, JSON.stringify(arr));
+    } catch (e) {}
+  }
+
+  function allTestsPassed() {
+    var state = getTestChecklistState();
+    if (state.length !== TEST_ITEMS.length) return false;
+    for (var i = 0; i < state.length; i++) {
+      if (!state[i]) return false;
+    }
+    return true;
   }
 
   function getStatusEntries() {
@@ -865,6 +908,53 @@
     );
   }
 
+  function getTestChecklistPageHtml() {
+    var state = getTestChecklistState();
+    var passed = 0;
+    for (var i = 0; i < TEST_ITEMS.length; i++) {
+      if (state[i] === true) passed++;
+    }
+    var summaryClass = passed < TEST_ITEMS.length ? "test-summary test-summary--warning" : "test-summary";
+    var warningHtml = passed < TEST_ITEMS.length
+      ? '<p class="test-warning">Resolve all issues before shipping.</p>'
+      : "";
+    var listHtml = "";
+    for (var j = 0; j < TEST_ITEMS.length; j++) {
+      var item = TEST_ITEMS[j];
+      var checked = state[j] === true;
+      var id = "test-check-" + j;
+      listHtml += '<li class="test-checklist__item">' +
+        '<input type="checkbox" id="' + id + '" class="test-checklist__input" data-test-index="' + j + '" aria-label="' + escapeHtml(item.label) + '"' + (checked ? " checked" : "") + '>' +
+        '<label for="' + id + '" class="test-checklist__label" title="' + escapeHtml(item.tooltip || "How to test") + '">' + escapeHtml(item.label) + "</label>" +
+        "</li>";
+    }
+    return (
+      '<div class="test-checklist-page">' +
+      '<p class="' + summaryClass + '" id="test-summary">Tests Passed: ' + passed + " / " + TEST_ITEMS.length + "</p>" +
+      warningHtml +
+      '<button type="button" class="btn btn-secondary" id="test-reset-btn">Reset Test Status</button>' +
+      '<ul class="test-checklist" id="test-checklist">' + listHtml + "</ul>" +
+      "</div>"
+    );
+  }
+
+  function getShipPageHtml() {
+    var passed = allTestsPassed();
+    if (!passed) {
+      return (
+        '<div class="ship-page ship-page--locked">' +
+        '<p class="ship-locked-msg">Complete all tests before shipping.</p>' +
+        '<a href="#/jt/07-test" class="btn btn-primary">Go to Test Checklist</a>' +
+        "</div>"
+      );
+    }
+    return (
+      '<div class="ship-page ship-page--ready">' +
+      '<p class="ship-ready-msg">All tests passed. Ready to ship.</p>' +
+      "</div>"
+    );
+  }
+
   function render(path) {
     var normalized = normalizePath(path);
     var isLanding = normalized === "/";
@@ -873,13 +963,17 @@
     var isSaved = normalized === "/saved";
     var isDigest = normalized === "/digest";
     var isProof = normalized === "/proof";
+    var isTestChecklist = normalized === "/jt/07-test";
+    var isShip = normalized === "/jt/08-ship";
     var isNotFound =
       !isLanding &&
       !isSettings &&
       !isDashboard &&
       !isSaved &&
       !isDigest &&
-      !isProof;
+      !isProof &&
+      !isTestChecklist &&
+      !isShip;
 
     if (pageTitleEl) {
       if (isNotFound) {
@@ -896,6 +990,10 @@
         pageTitleEl.textContent = "Digest";
       } else if (isProof) {
         pageTitleEl.textContent = "Proof";
+      } else if (isTestChecklist) {
+        pageTitleEl.textContent = "Test Checklist";
+      } else if (isShip) {
+        pageTitleEl.textContent = "Ship";
       }
     }
 
@@ -917,6 +1015,10 @@
       } else if (isProof) {
         pageSubtitleEl.textContent =
           "Artifact collection and proof of work will appear here.";
+      } else if (isTestChecklist) {
+        pageSubtitleEl.textContent = "Built-in test checklist. Complete all items before shipping.";
+      } else if (isShip) {
+        pageSubtitleEl.textContent = "";
       }
     }
 
@@ -967,6 +1069,13 @@
           '<h2 class="heading-lg">Artifact collection</h2>' +
           '<p class="subtext">Proof and artifacts will be collected and shown here in a future step.</p>' +
           "</div>";
+      } else if (isTestChecklist) {
+        routeView.classList.remove("route-view--full");
+        routeView.innerHTML = getTestChecklistPageHtml();
+        attachTestChecklistListeners();
+      } else if (isShip) {
+        routeView.classList.remove("route-view--full");
+        routeView.innerHTML = getShipPageHtml();
       } else if (isNotFound) {
         routeView.classList.remove("route-view--full");
         routeView.innerHTML = "";
@@ -1076,6 +1185,33 @@
         var subject = "My 9AM Job Digest";
         var mailto = "mailto:?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
         window.location.href = mailto;
+      });
+    }
+  }
+
+  function attachTestChecklistListeners() {
+    var listEl = document.getElementById("test-checklist");
+    var resetBtn = document.getElementById("test-reset-btn");
+
+    if (listEl) {
+      listEl.addEventListener("change", function (e) {
+        var input = e.target;
+        if (input && input.classList && input.classList.contains("test-checklist__input")) {
+          var index = parseInt(input.getAttribute("data-test-index"), 10);
+          if (isNaN(index) || index < 0 || index >= TEST_ITEMS.length) return;
+          var state = getTestChecklistState();
+          while (state.length < TEST_ITEMS.length) state.push(false);
+          state[index] = input.checked;
+          setTestChecklistState(state);
+          render(currentPath);
+        }
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        setTestChecklistState([]);
+        render(currentPath);
       });
     }
   }
